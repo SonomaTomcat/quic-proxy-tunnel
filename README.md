@@ -1,6 +1,6 @@
 # QUIC Proxy Tunnel
 
-A high-performance HTTP/SOCKS5 proxy that tunnels traffic over QUIC connections. This project provides both client and server components, enabling secure and efficient proxying of HTTP(S) and arbitrary TCP traffic using the QUIC protocol.
+A high-performance HTTP/SOCKS5 proxy that tunnels traffic over QUIC connections. This project provides both client and server components, enabling secure and efficient proxying of HTTP(S) and arbitrary traffic using the QUIC protocol.
 
 ## Features
 - HTTP proxy client or SOCKS5 proxy client (configurable) that forwards requests over QUIC (Sock5 proxy is not fully implemented yet)
