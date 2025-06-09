@@ -1,0 +1,42 @@
+# Ignore test folder
+test/
+
+# Ignore JetBrains IDE project folder
+.idea/
+
+# Ignore build artifacts
+qp-tunnel
+*.exe
+*.dll
+*.so
+*.dylib
+*.out
+*.bin
+
+# Ignore Go build artifacts
+*.o
+
+# Ignore Go test binary
+*_test
+
+# Ignore Go vendor directory
+vendor/
+
+# Ignore Go module files
+go.sum
+
+# Ignore Go workspace files
+go.work
+
+# Ignore Go coverage files
+*.cover
+
+# Ignore various temporary and log files
+*.log
+*.test
+coverage.out
+.DS_Store
+*.swp
+*.tmp
+*.temp
+node_modules/

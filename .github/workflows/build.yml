@@ -1,0 +1,78 @@
+name: Build Binaries
+# This workflow builds the quic-proxy-tunnel binaries for multiple OS and architecture combinations
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin, freebsd]
+        goarch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Tidy Go Modules
+        run: go mod tidy
+      - name: Build all variants
+        run: |
+          mkdir -p dist
+          if [ "${{ matrix.goarch }}" = "amd64" ]; then
+            for variant in v1 v2 v3 v4; do
+              if [ "${{ matrix.goos }}" = "windows" ]; then
+                CGO_ENABLED=0 GOAMD64=$variant GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o dist/quic-proxy-tunnel-windows-amd64-$variant.exe main.go
+              else
+                CGO_ENABLED=0 GOAMD64=$variant GOOS=${{ matrix.goos }} GOARCH=amd64 go build -ldflags "-s -w" -o dist/quic-proxy-tunnel-${{ matrix.goos }}-amd64-$variant main.go
+              fi
+            done
+          elif [ "${{ matrix.goarch }}" = "arm64" ]; then
+            if [ "${{ matrix.goos }}" = "windows" ]; then
+              CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -ldflags "-s -w" -o dist/quic-proxy-tunnel-windows-arm64.exe main.go
+            else
+              CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=arm64 go build -ldflags "-s -w" -o dist/quic-proxy-tunnel-${{ matrix.goos }}-arm64 main.go
+            fi
+          fi
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: quic-proxy-tunnel-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/quic-proxy-tunnel-${{ matrix.goos }}-${{ matrix.goarch }}-*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install GitHub CLI
+        run: sudo apt-get update && sudo apt-get install -y gh
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+      - name: Upload Release Assets
+        run: |
+          for file in dist/*; do
+            echo "Uploading $file"
+            gh release upload ${{ github.ref_name }} "$file" --clobber
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
